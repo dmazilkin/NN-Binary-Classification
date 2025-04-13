@@ -2,12 +2,12 @@ import sys
 from keras.api.saving import load_model
 from keras import Sequential
 
-from helpers import preprocess_data, TRAINED_MODEL
+from helpers import preprocess_test_data, decode_labels, TRAINED_MODEL
 
 # prepare dataset
 dataset_path = sys.argv[1]
 print('Loading and preprocessing data...', end=' ')
-X, Y_target = preprocess_data(dataset_path, encode_classes=False)
+X, Y_target = preprocess_test_data(dataset_path)
 print('[DONE]')
 # loading neural network
 print('Loading trained neural network...', end=' ')
@@ -18,12 +18,13 @@ print('Predicting...', end=' ')
 Y_predict = neural_network.predict(X, verbose=0)
 print('[DONE]')
 print(20 * '-')
-print('class'.ljust(5) + '|'.center(10) + 'class_expected'.ljust(5))
 Y_predict = (Y_predict > 0.5).astype(int)
-Y_predict_labels = get_labels(Y_predict)
+Y_predict_labels = decode_labels(Y_predict)
 if Y_target is not None:
-    for label_predict, label_target in zip(Y_predict_labels, Y_predict_labels):
-        print(label_predict.ljust(5) + '|'.center(10) + label_target.ljust(5))
+    print('class' + ' ' + 'class_expected')
+    for y_predict, y_target in zip(Y_predict_labels, Y_target):
+        print(f'{y_predict}' + ' ' + f'{y_target}')
 else:
-    for label_predict in Y_predict_labels:
-        print(label_predict.ljust(5))
+    print('class'.ljust(5))
+    for y_predict in Y_predict:
+        print(f'{y_predict}'.ljust(5))

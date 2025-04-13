@@ -1,12 +1,15 @@
 import pandas as pd
-from typing import Union
+import json
+from typing import Any
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
-TRAINED_MODEL = 'neural_network_weights.keras'
+TRAINED_MODEL = 'output/neural_network_weights.keras'
+STANDARD_SCALER = 'output/StandardScalerParams.json'
+LABELS = 'output/Labels.json'
 
-def preprocess_data(file: str, encode_classes: bool) -> tuple[pd.DataFrame, pd.DataFrame]:
+def preprocess_train_data(file: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     '''
-    Preprocess data from dataset.
+    Preprocess train data from dataset.
 
     :param file: path to CSV file with dataset
     :param encode_classes: True for encoding classes, False - otherwise
@@ -15,19 +18,43 @@ def preprocess_data(file: str, encode_classes: bool) -> tuple[pd.DataFrame, pd.D
     '''
 
     # read CSV file and split data into X and Y dataframes
-    X, Y = None, None
     df = pd.read_csv(file)
-    if 'class' in df.columns:
-        X, Y = df.drop(['class'], axis=1), df['class']
-    else:
-        X = df
+    X, Y = df.drop(['class'], axis=1), df['class']
     # preprocess X data
     scaler = StandardScaler()
     scaler.fit(X)
+    with open(STANDARD_SCALER, 'w') as file:
+        json.dump({'mean': scaler.mean_.tolist(), 'scale': scaler.scale_.tolist()}, file, indent=4)
     X = scaler.transform(X)
     # preprocess Y data if defined
-    if Y is not None and encode_classes:
-        encoder = LabelEncoder()
-        encoder.fit(Y)
-        Y = encoder.transform(Y)
+    encoder = LabelEncoder()
+    encoder.fit(Y)
+    with open(LABELS, 'w') as file:
+        json.dump({'labels': encoder.classes_.tolist()}, file, indent=4)
+    Y = encoder.transform(Y)
     return X, Y
+
+def preprocess_test_data(file: str):
+    '''
+    Preprocess test data from dataset.
+
+    :param file: path to CSV file with dataset
+
+    :return: X test, Y test
+    '''
+
+    df = pd.read_csv(file)
+    X, Y = df.drop(['class'], axis=1), df['class']
+    scaler = StandardScaler()
+    with open(STANDARD_SCALER, 'r') as file:
+        scaler_config = json.load(file)
+    scaler.mean_, scaler.scale_ = scaler_config['mean'], scaler_config['scale']
+    X = scaler.transform(X)
+    return X, Y
+
+def decode_labels(Y: Any) -> pd.Series:
+    encoder = LabelEncoder()
+    with open(LABELS, 'r') as file:
+        encoder_config = json.load(file)
+    encoder.classes_ = pd.Series(encoder_config['labels'], name='class', dtype='object')
+    return pd.Series(encoder.inverse_transform(Y))
