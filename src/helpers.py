@@ -3,9 +3,9 @@ import json
 from typing import Any
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 
-TRAINED_MODEL = 'output/neural_network_weights.keras'
-STANDARD_SCALER = 'output/StandardScalerParams.json'
-LABELS = 'output/Labels.json'
+TRAINED_MODEL = 'output/neural_network.keras'
+STANDARD_SCALER = 'output/standard_scaler.json'
+ENCODER = 'output/encoder.json'
 
 def preprocess_train_data(file: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     '''
@@ -29,8 +29,8 @@ def preprocess_train_data(file: str) -> tuple[pd.DataFrame, pd.DataFrame]:
     # preprocess Y data if defined
     encoder = LabelEncoder()
     encoder.fit(Y)
-    with open(LABELS, 'w') as file:
-        json.dump({'labels': encoder.classes_.tolist()}, file, indent=4)
+    with open(ENCODER, 'w') as file:
+        json.dump({'classes': encoder.classes_.tolist()}, file, indent=4)
     Y = encoder.transform(Y)
     return X, Y
 
@@ -54,7 +54,7 @@ def preprocess_test_data(file: str):
 
 def decode_labels(Y: Any) -> pd.Series:
     encoder = LabelEncoder()
-    with open(LABELS, 'r') as file:
+    with open(ENCODER, 'r') as file:
         encoder_config = json.load(file)
-    encoder.classes_ = pd.Series(encoder_config['labels'], name='class', dtype='object')
+    encoder.classes_ = pd.Series(encoder_config['classes'], name='class', dtype='object')
     return pd.Series(encoder.inverse_transform(Y))

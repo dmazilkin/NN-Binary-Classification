@@ -27,7 +27,7 @@ early_stop = EarlyStopping(monitor='loss', min_delta=0.0001, patience=10, restor
 print('[DONE]')
 # train and save trained neural network
 print('Training neural network...', end=' ')
-nn.fit(X_train, Y_train, epochs=2000, batch_size=16, shuffle=True, class_weight={0:1.5, 1:1}, callbacks=[early_stop])
+nn.fit(X_train, Y_train, epochs=2000, batch_size=16, shuffle=True, class_weight={0:1.5, 1:1}, callbacks=[early_stop], verbose=0)
 print('[DONE]')
 print(f'Saving neural network as \'{TRAINED_MODEL}\'...', end=' ')
 nn.save(TRAINED_MODEL)
